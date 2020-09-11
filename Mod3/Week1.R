@@ -23,36 +23,36 @@ length(xpathApply(node,"//zipcode[.=21231]")) #127
 #Q5
 library(data.table)
 DT <- fread("Mod3//getdata_data_ss06pid.csv")
-fast <- list(0)
+fast <- list()
 
 ptm <- proc.time()
 opt1a <- mean(DT[DT$SEX==1,]$pwgtp15); opt1b <-mean(DT[DT$SEX==2,]$pwgtp15)
 t <- proc.time()- ptm; t
-fast <- append(fast, t[[1]])
+fast[1] <- t[[1]]
 
 ptm <- proc.time()
 opt2 <- tapply(DT$pwgtp15,DT$SEX,mean)
 t <- proc.time()- ptm; t
-fast <- append(fast, t[[1]])
+fast[2] <- t[[1]]
 
 ptm <- proc.time()
 opt3 <- DT[,mean(pwgtp15),by=SEX]
 t <- proc.time()- ptm; t
-fast <- append(fast, t[[1]])
+fast[3] <- t[[1]]
 
 ptm <- proc.time()
 opt4a <- rowMeans(DT)[DT$SEX==1]; opt4b <- rowMeans(DT)[DT$SEX==2]
 t <- proc.time()- ptm; t
-fast <- append(fast, t[[1]])
+fast[4] <- t[[1]]
 
 ptm <- proc.time()
 opt5 <- sapply(split(DT$pwgtp15,DT$SEX),mean)
 t <- proc.time()- ptm; t
-fast <- append(fast, t[[1]])
+fast[5] <- t[[1]]
 
 ptm <- proc.time()
 opt6 <- mean(DT$pwgtp15,by=DT$SEX)
 t <- proc.time()- ptm; t
-append(fast, t[[1]])
+fast[6] <- t[[1]]
 
-fast
+order(unlist(fast)) #6
