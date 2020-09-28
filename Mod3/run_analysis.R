@@ -49,4 +49,5 @@ dffinal <- dfextract %>%
   summarise_all(mean)
 names(dffinal)[3:ncol(dffinal)] <- sapply(names(dffinal)[3:ncol(dffinal)], function(x) {paste0("Mean of ",x)}) 
 
+write.csv(dffinal,"Mod3/dffinal.csv")
        
