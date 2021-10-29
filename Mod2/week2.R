@@ -44,7 +44,7 @@ pollutantmean = function(directory, pollutant, id = 1:332) {
 #set complete
 #
 #
-complete <- function(directory, id = 1:332) {
+complete = function(directory, id = 1:332) {
   #set root path
   path = paste0(getwd(),"/", directory)
   
@@ -67,6 +67,44 @@ complete <- function(directory, id = 1:332) {
                      nobs = sum(complete.cases(df))
                      )
     dat = rbind(dat,df)
+  }
+  
+  return(dat)
+}
+
+#
+#
+# corr
+#
+#
+corr = function(directory, threshold = 0) {
+  #set root path
+  path = paste0(getwd(),"/", directory)
+  
+  #set helper function for file name
+  padzero = function (i) {
+    if (i<10) {i = paste0("/00",i)}
+    else if (i<100) {i = paste0("/0",i)}
+    else {i = paste0("/",i)}
+    return (i)
+  }
+  
+  #set variable to store selected file data
+  dat = c()
+  
+  #read selected file data
+  for (file in 1:332) {
+    file2 = padzero(file)
+    df = read.csv(paste0(path,file2,".csv"))
+    
+    if(sum(complete.cases(df))<threshold){
+      df = c()
+    } else {
+      df = df[complete.cases(df),2:3]
+      df = cor(df$nitrate,df$sulfate)
+      }
+    
+    dat = c(dat,df)
   }
   
   return(dat)
