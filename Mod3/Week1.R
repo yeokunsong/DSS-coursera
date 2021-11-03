@@ -1,14 +1,15 @@
+setwd("/cloud/project/Mod3")
+getwd()
+
 library(dplyr)
 
 #Q1
-df <- read.csv("Mod3//getdata_data_ss06hid.csv")
-data <- as_tibble(df)
-
-data %>% filter(VAL == 24) %>% nrow() #53
+df <- read.csv("getdata_data_ss06hid.csv")
+df %>% filter(VAL == 24) %>% nrow() #53
 
 #Q3
 library(xlsx)
-dat <- read.xlsx("Mod3//getdata_data_DATA.gov_NGAP.xlsx",
+dat <- read.xlsx("getdata_data_DATA.gov_NGAP.xlsx",
                  sheetIndex = 1,
                  rowIndex = 18:23,
                  colIndex = 7:15)
@@ -16,13 +17,18 @@ sum(dat$Zip*dat$Ext,na.rm=T) #36534720
 
 #Q4
 library(XML)
-df2 <- xmlTreeParse("Mod3//getdata_data_restaurants.xml")
+df2 <- xmlTreeParse("getdata_data_restaurants.xml")
 node <- xmlRoot(df2)
 length(xpathApply(node,"//zipcode[.=21231]")) #127
 
+df3 = xmlParse("getdata_data_restaurants.xml")
+rootnode <- xmlRoot(df3)
+df3 = xmlToDataFrame(rootnode[[1]])
+df3 %>% filter(zipcode == 21231) %>% nrow() #127
+
 #Q5
 library(data.table)
-DT <- fread("Mod3//getdata_data_ss06pid.csv")
+DT <- fread("getdata_data_ss06pid.csv")
 fast <- list()
 
 ptm <- proc.time()
