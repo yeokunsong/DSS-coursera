@@ -13,6 +13,7 @@ pic2 <- readJPEG("getdata_jeff.jpg",native = TRUE)
 quantile(pic2,c(0.3,0.8))
 
 #q3
+library(dplyr)
 download.file("https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FGDP.csv",
               destfile = "getdata_data_GDP.csv")
 download.file("https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FEDSTATS_Country.csv",
@@ -25,9 +26,13 @@ df3b <- read.csv("getdata_data_EDSTATS_Country.csv"); head(df3b[1:3])
 df3a$X.4 <- as.numeric(gsub(",","",df3a$X.4)); head(df3a)
 df3a$X.1 <- as.numeric(df3a$X.1)
 
-m0 <- merge(df3a,df3b,by.x = "X",by.y = "CountryCode",all=FALSE); head(m0)
+m0 <- merge(df3a,df3b,by.x = "X",by.y = "CountryCode",all=FALSE); head(m0)[1:15]
 m0$X.1 <- as.numeric(m0$X.1)
-arrange(m0,X.4)$Table.Name[13]
+
+dim(m0)
+tail(arrange(m0,desc(X.1)))[1:5]
+arrange(m0,desc(X.1))[13,1:5]
+
 
 #q4
 m0 %>% 
@@ -37,4 +42,4 @@ m0 %>%
 
 #q5
 m0$cut <- cut(m0$X.1,5)
-table(m0$cut,m0$Income.Group)[1,"Low income"]
+table(m0$cut,m0$Income.Group)
