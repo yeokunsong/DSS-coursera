@@ -1,16 +1,16 @@
 #final assignment
 
 download.file("https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip",
-              destfile="Mod3/final.zip")
-unzip("Mod3/final.zip",exdir = "Mod3")
+              destfile="final.zip")
+unzip("final.zip")
 
-dfcolnames <- read.table("Mod3/UCI HAR Dataset/features.txt")[,2]
-train_x <- read.table("Mod3/UCI HAR Dataset/train/X_train.txt")
-train_y <- read.table("Mod3/UCI HAR Dataset/train/y_train.txt")
-test_x <- read.table("Mod3/UCI HAR Dataset/test/X_test.txt")
-test_y <- read.table("Mod3/UCI HAR Dataset/test/y_test.txt")
-subject_train <- read.table("Mod3/UCI HAR Dataset/train/subject_train.txt")
-subject_test <- read.table("Mod3/UCI HAR Dataset/test/subject_test.txt")
+dfcolnames <- read.table("UCI HAR Dataset/features.txt")[,2]
+train_x <- read.table("UCI HAR Dataset/train/X_train.txt")
+train_y <- read.table("UCI HAR Dataset/train/y_train.txt")
+test_x <- read.table("UCI HAR Dataset/test/X_test.txt")
+test_y <- read.table("UCI HAR Dataset/test/y_test.txt")
+subject_train <- read.table("UCI HAR Dataset/train/subject_train.txt")
+subject_test <- read.table("UCI HAR Dataset/test/subject_test.txt")
 
 # 1. Merges the training and the test sets to create one data set.
 

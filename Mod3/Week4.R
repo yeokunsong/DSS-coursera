@@ -1,7 +1,7 @@
 #Q1
 download.file("https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2Fss06hid.csv",
-              destfile = "Mod3/w4q1.csv")
-community <- read.csv("Mod3/w4q1.csv")
+              destfile = "w4q1.csv")
+community <- read.csv("w4q1.csv")
 commNames <- names(community)
 splitNames <- strsplit(commNames,"wgtp")
 splitNames[123]
@@ -20,13 +20,16 @@ length(grep("^United",countryNames))
 url <- "https://d396qusza40orc.cloudfront.net/getdata%2Fdata%2FEDSTATS_Country.csv"
 con <- url(url)
 edu <- read.csv(con)
-t <- grepl(": June.*;",edu$Special.Notes)
-length(edu$Special.Notes[t])
+m0 <- merge(GDP,edu,by.x = "X",by.y = "CountryCode",all=FALSE); head(m0)
+
+table( grepl(": June.*;",m0$Special.Notes))
+
 
 #Q5
 library(quantmod)
 amzn = getSymbols("AMZN",auto.assign=FALSE)
 sampleTimes = index(amzn)
-df2012 <- sampleTimes[grepl("2012-",sampleTimes)]; length(df2012)
+df2012 <- sampleTimes[grepl("2012-",sampleTimes)]
+length(df2012)
 df2012wd <- sapply(df2012,weekdays)
 sum(grepl("Monday",df2012wd))
