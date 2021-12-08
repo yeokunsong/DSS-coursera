@@ -7,6 +7,11 @@ library(dplyr)
 df <- read.csv("getdata_data_ss06hid.csv")
 df %>% filter(VAL == 24) %>% nrow() #53
 
+table(df[,"VAL"] ==24)
+
+sum(df$VAL==24,na.rm=1)
+
+
 #Q3
 library(xlsx)
 dat <- read.xlsx("getdata_data_DATA.gov_NGAP.xlsx",
