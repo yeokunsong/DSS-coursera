@@ -1,0 +1,46 @@
+# Week2 project
+
+## Loading and preprocessing the data
+
+And loading of necessary library.
+
+```{r, results='hide',warning=FALSE,message=FALSE}
+library(dplyr)
+```
+
+```{r}
+df = read.csv("activity.csv")
+df$date = as.Date(df$date)
+head(df)
+```
+
+## What is mean total number of steps taken per day?
+
+#### 1. Calculate the total number of steps taken per day
+
+```{r}
+df_step = df %>%
+  group_by(date) %>%
+  summarise(Steps = sum(steps))
+
+head(df_step)
+
+barplot(Steps ~ date, data = df_step, main= "Total Steps by day")
+```
+
+#### 2. Make a histogram of the total number of steps taken each day
+
+```{r}
+hist(df_step$Steps, main = "Histogram of total steps per day", xlab = "Days")
+```
+
+#### 3. Report the mean and median of the total number of steps taken per day
+
+```{r}
+meanSteps = mean(df_step$Steps,na.rm=1)
+medianSteps = median(df_step$Steps,na.rm=1)
+
+```
+
+The mean and median of the total number of steps taken per 
+day are `r sprintf("%.2f", meanSteps) ` and `r medianSteps` respectively.
