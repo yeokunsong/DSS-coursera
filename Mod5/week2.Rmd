@@ -6,6 +6,7 @@ And loading of necessary library.
 
 ```{r, results='hide',warning=FALSE,message=FALSE}
 library(dplyr)
+library(ggplot2)
 ```
 
 ```{r}
@@ -18,19 +19,19 @@ head(df)
 
 #### 1. Calculate the total number of steps taken per day
 
-```{r}
+```{r TotalStepsbyday}
 df_step = df %>%
   group_by(date) %>%
   summarise(Steps = sum(steps))
 
-head(df_step)
+#head(df_step)
 
 barplot(Steps ~ date, data = df_step, main= "Total Steps by day")
 ```
 
 #### 2. Make a histogram of the total number of steps taken each day
 
-```{r}
+```{r Histogramoftotalstepsperday}
 hist(df_step$Steps, main = "Histogram of total steps per day", xlab = "Days")
 ```
 
@@ -42,5 +43,127 @@ medianSteps = median(df_step$Steps,na.rm=1)
 
 ```
 
-The mean and median of the total number of steps taken per 
-day are `r sprintf("%.2f", meanSteps) ` and `r medianSteps` respectively.
+The mean and median of the total number of steps taken per day are `r sprintf("%.2f", meanSteps) ` and `r medianSteps` respectively.
+
+## What is the average daily activity pattern?
+
+#### 1.Make a time series plot (type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days 
+
+#### 2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+``` {r Averagestepsforeachinterval}
+df_step_interval = df %>%
+  group_by(interval) %>%
+  summarise(Steps = mean(steps,na.rm=1))
+
+interval_maxstep = df_step_interval$interval[which.max(df_step_interval$Steps)]
+maxstep = max(df_step_interval$Steps, na.rm=1)
+
+plot(df_step_interval, type="l", main="Average steps for each interval")
+abline(v=interval_maxstep, col="red", lwd = 2)
+text(interval_maxstep,maxstep,"Max steps at Interval 835", col="red", cex = 0.9, adj=0)
+
+```
+
+Interval ` r interval_maxstep` has the maximum no. of average steps.
+
+## Imputing missing values
+
+#### 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NA)
+
+``` {r}
+na_rows = nrow(df) - sum(complete.cases(df))
+```
+
+There are `r na_rows` rows with NAs.
+
+#### 2. Devise a strategy for filling in all of the missing values in the dataset.
+
+To use mean from df_step_interval to replace na values.
+
+``` {r}
+# for each row, if $step shows na, take the $interval and match against df_step_interval to get the mean steps for that interval
+
+for (i in 1:nrow(df)){
+  if (is.na(df[i,1])) {
+    df$imputedStep[i] = df_step_interval$Steps[which(df[i,3]==df_step_interval$interval)]
+  } else {
+    df$imputedStep[i] = df[i,1]
+  }
+}
+
+head(df)
+
+```
+
+#### 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+``` {r}
+df2 = df %>%
+  select(imputedStep, date, interval) %>%
+  rename(steps = imputedStep)
+
+```
+#### 4. Using dataset with imputed values
+
+- Make a histogram of the total number of steps taken each day
+- Calculate and report the mean and median total number of steps taken per day. 
+- Do these values differ from the estimates from the first part of the assignment? 
+- What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+``` {r Histogramoftotalstepsperday(imputed)}
+df_step2 = df2 %>%
+  group_by(date) %>%
+  summarise(Steps = sum(steps))
+
+hist(df_step2$Steps, main = "Histogram of total steps per day (imputed)", xlab = "Days")
+```
+
+```{r}
+meanSteps2 = mean(df_step2$Steps)
+medianSteps2 = median(df_step2$Steps)
+
+```
+
+The mean and median of the total number of steps taken per day are `r sprintf("%.2f", meanSteps2) ` and `r sprintf("%.2f",medianSteps2)` respectively.
+
+``` {r}
+oldValue= c(meanSteps,medianSteps)
+newValue = c(meanSteps2,medianSteps2)
+data.frame(Old = oldValue, New = newValue, row.names = c("Mean","Median"))
+```
+
+```{r Impactofimputingsteps(inred), warning=FALSE}
+df3 = df %>%
+  group_by(date) %>%
+  summarise(OldSum = sum(steps), NewSum=sum(imputedStep))
+
+ggplot(df3, aes(x=date)) + 
+  geom_line(aes(y=NewSum), col="red") +
+  geom_line(aes(y=OldSum), col="blue") +
+  labs (title ="Impact of imputing steps (in red)",x="Steps",y="Date", color = "legend" ) +
+  scale_color_manual(values = c("red","blue"))
+
+
+```
+## Are there differences in activity patterns between weekdays and weekends?
+
+#### 1.Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+``` {r}
+dayType = function (x) {
+  day = weekdays(x)
+  if (startsWith(day,"S")) "Weekend" else "Weekday"
+}
+
+df2$Day = sapply(df2$date, dayType)
+```
+
+#### 2.Make a panel plot containing a time series plot (type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
+
+```{r timeseries, fig.width=10}
+ggplot(df2, aes(x=interval, y= steps, color=Day)) +
+  geom_line() +
+  facet_grid(Day ~ .) +
+  ggtitle ("Time series of steps taken at each interval by day type")
+```
