@@ -1,0 +1,151 @@
+---
+title: "Tornado and Hurricane/Typhoon are the most devasting type of weather events, in terms of population health and economic value, based on NOAA storm data between 1996 and 2011"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Synopsis
+
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. There is an impetus to identify states which were badly affected and reserve resources to assist in recovery effort. 
+
+Weather events which caused the most devasting impact to economic consequences and population health were identified. In addition, the states which were impacted most were also highlighted.
+
+Only a subset of the data is used. A range of dates were specified to ensure coverage of all weather events. Crop and property damages data were used as estimate for economic loss while injury and fatality counts were used as estimate for population loss. 
+
+
+```{r load, include=FALSE, warning=FALSE, cache=TRUE}
+library(dplyr)
+library(ggplot2)
+df = read.csv("repdata_data_StormData.csv.bz2")
+```
+
+## Data Processing
+
+
+The loaded data is verified to be correct according to [checks given by Course instructor] ( https://www.coursera.org/learn/reproducible-research/discussions/weeks/4/threads/38y35MMiEeiERhLphT2-QA). In line with the recommended data processing work, the following steps were performed
+
+- 9 out of 37 fields were identified to serve the objective - Date, State, event type, Fatalities and Injuries, and Crop and Property damage - and were subset for further analysis
+- Only data from 1996 onward are relevant for finding the most expensive event type
+- EXP fields are merged with the host field to derive actual value for PROPDMG and CROPDMG
+
+
+```{r}
+dim(df)
+
+df2 = df %>%
+  mutate(DATE = as.Date(BGN_DATE,"%m/%d/%Y")) %>%
+  mutate(YEAR = as.numeric(substr(DATE,1,4))) %>%
+  select(YEAR, DATE,STATE,EVTYPE,FATALITIES,INJURIES,PROPDMG,PROPDMGEXP,CROPDMG,CROPDMGEXP) %>%
+  filter(YEAR >= 1996) 
+```
+
+``` {r}
+#helper function to translate EXP field
+expandEXP = function(x) {
+  
+  
+  y = tryCatch(
+    if(x=="") "+" else as.numeric(x),
+    warning = function(war) x
+  )
+  
+  if (is.numeric(y) & y >= 0){
+    10
+    
+  } else if (y=="+" | y=="-" | y=="?") {
+     1
+    
+  } else {
+    switch(tolower(y),
+         "h" = 1e2,
+         "k"= 1e3,
+         "m" = 1e6,
+         "b" = 1e9)
+  }
+}
+```
+
+``` {r}
+df2$PROPDMGEXP = sapply(df2$PROPDMGEXP,expandEXP,USE.NAMES = 0)
+df2$CROPDMGEXP = sapply(df2$CROPDMGEXP,expandEXP,USE.NAMES = 0)
+
+df2$PROPDMG = df2$PROPDMG * df2$PROPDMGEXP
+df2$CROPDMG = df2$PROPDMG * df2$CROPDMGEXP
+  
+head(df2)
+
+```
+
+## Across the United States, which types of events are most harmful with respect to population health?
+
+
+```{r fig.width=8}
+df3 = df2 %>%
+  group_by(EVTYPE) %>%
+  summarise(Frequency = n(),Total_fatalities = sum(FATALITIES), Total_injuries = sum(INJURIES)) %>%
+  arrange(desc(Frequency))
+
+ggplot(df3,aes(x=Total_fatalities,y=Total_injuries,label=EVTYPE)) +
+  geom_point(colour = "red", aes(size = Frequency)) +
+  geom_text(data=subset(df3,Frequency >150000 | Total_fatalities >200 & Total_injuries>0), vjust=1.2, size=2)
+
+tornadoFreq_rank = rank(-df3$Frequency)[df3$EVTYPE=='TORNADO']
+```
+
+Population health can be approximated by the number of fatalities and injuries sustained from each event.
+
+Although frequency of TORNADO is only at `r tornadoFreq_rank`th place, it's total fatalities and injuries are the highest.
+
+## Across the United States, which types of events have the greatest economic consequences?
+
+```{r fig.width=8}
+df4 = df2 %>%
+  group_by(EVTYPE) %>%
+  summarise(Frequency = n(),Total_PROPDMG = sum(PROPDMG), Total_CROPDMG = sum(CROPDMG)) %>%
+  arrange(desc(Frequency))
+
+ggplot(df4,aes(x=Total_PROPDMG,y=Total_CROPDMG,label=EVTYPE)) +
+  geom_point(colour = "red", aes(size = Frequency)) +
+  scale_y_continuous(trans='log10') +
+  scale_x_continuous(trans='log10') +
+  geom_text(data=subset(df4,Frequency >150000 | Total_CROPDMG > 1e14 & Total_PROPDMG > 1e10), vjust=1.2, size=2)
+
+hurricaneTyphoonFreq_rank = rank(-df4$Frequency)[df4$EVTYPE=='HURRICANE/TYPHOON']
+```
+
+Economic consequencescan be estimated from the extent of property and crop damages.
+
+Although frequency of HURRICANE/TYPHOON is only at `r hurricaneTyphoonFreq_rank`^th place, it's total crop and property damages are the highest.
+
+## Which state is most adversely impacted
+
+```{r}
+library(patchwork)
+
+df5 = df2 %>%
+  group_by(STATE) %>%
+  summarise(Frequency = n(),Total_fatalities = sum(FATALITIES), Total_injuries = sum(INJURIES), Total_PROPDMG = sum(PROPDMG), Total_CROPDMG = sum(CROPDMG)) %>%
+  arrange(desc(Frequency))
+
+p1 = ggplot(df5,aes(x=Total_PROPDMG,y=Total_CROPDMG,label=STATE)) +
+  geom_point(colour = "red", aes(size = Frequency), alpha=0.5) +
+  scale_y_continuous(trans='log10') +
+  scale_x_continuous(trans='log10') +
+  theme(legend.position = "none") +
+  ggtitle ("Economic consequences") +
+  geom_text(data=subset(df5,Frequency >50000 | Total_CROPDMG > 1e15 & Total_PROPDMG > 1e10), vjust=1.2, size=2)
+
+p2 = ggplot(df5,aes(x=Total_fatalities,y=Total_injuries,label=STATE)) +
+  geom_point(colour = "red", aes(size = Frequency)) +
+  ggtitle ("Population health") +
+  geom_text(data=subset(df5,Frequency >50000 | Total_fatalities > 400 & Total_injuries > 2500), vjust=1.2, size=2)
+
+p1+p2
+
+```
+There is a trend that the higher the frequency of STATE, the larger the impact on economic consequences and population health. Besides the general expectation that the damages add up with each occurrence of a weather event, it is also possible that the damages were compounded by an inability of a state to recover sufficiently before the next weather pattern hits. This means a state could have sustained more damage compared to another geographical similar state.However, this is beyond the scope of this analysis.
+
+Based on the charts, there is no single state that received the brunt of economic and population loss. However, 4 states are in the list of highly impacted states i.e. AL, FL, CA and TX. They should receive more aids, either in the form of stronger countermeasures against adverse weather events or resources to support post-event recovery.
+
